@@ -1,0 +1,32 @@
+[package]
+name = "otel-stack"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "OpenTelemetry integration for Rust — unified tracing, metrics, and OTLP export with version-pinned dependencies"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/WyattAu/otel-stack"
+keywords = ["opentelemetry", "tracing", "metrics", "otlp", "observability"]
+categories = ["development-tools::debugging", "web-programming"]
+readme = "README.md"
+
+[dependencies]
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "registry"] }
+opentelemetry = "0.28"
+opentelemetry_sdk = "0.28"
+tracing-opentelemetry = "0.29"
+
+# Optional exporters
+opentelemetry-otlp = { version = "0.28", optional = true, features = ["grpc-tonic", "trace"] }
+opentelemetry-stdout = { version = "0.28", optional = true }
+prometheus = { version = "0.13", optional = true }
+
+[features]
+default = ["otlp"]
+otlp = ["dep:opentelemetry-otlp"]
+stdout = ["dep:opentelemetry-stdout"]
+prometheus = ["dep:prometheus"]
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
