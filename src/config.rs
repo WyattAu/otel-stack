@@ -63,3 +63,91 @@ impl OtelConfig {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_config() {
+        let config = OtelConfig::default();
+        assert_eq!(config.service_name, "unknown-service");
+        assert!(config.version.is_none());
+        assert!(config.endpoint.is_none());
+        assert_eq!(config.sample_rate, 1.0);
+        assert!(matches!(config.exporter, ExporterConfig::Otlp));
+    }
+
+    #[test]
+    fn new_sets_service_name() {
+        let config = OtelConfig::new("my-service");
+        assert_eq!(config.service_name, "my-service");
+    }
+
+    #[test]
+    fn builder_service_name() {
+        let config = OtelConfig::default().service_name("api-server");
+        assert_eq!(config.service_name, "api-server");
+    }
+
+    #[test]
+    fn builder_version() {
+        let config = OtelConfig::default().version("1.2.3");
+        assert_eq!(config.version, Some("1.2.3".to_string()));
+    }
+
+    #[test]
+    fn builder_endpoint() {
+        let config = OtelConfig::default().endpoint("http://localhost:4317");
+        assert_eq!(config.endpoint, Some("http://localhost:4317".to_string()));
+    }
+
+    #[test]
+    fn builder_sample_rate_clamped() {
+        let config = OtelConfig::default().sample_rate(2.0);
+        assert_eq!(config.sample_rate, 1.0);
+
+        let config = OtelConfig::default().sample_rate(-1.0);
+        assert_eq!(config.sample_rate, 0.0);
+
+        let config = OtelConfig::default().sample_rate(0.5);
+        assert_eq!(config.sample_rate, 0.5);
+    }
+
+    #[test]
+    fn builder_exporter() {
+        let config = OtelConfig::default().exporter(ExporterConfig::Stdout);
+        assert!(matches!(config.exporter, ExporterConfig::Stdout));
+    }
+
+    #[test]
+    fn builder_chaining() {
+        let config = OtelConfig::new("svc")
+            .version("1.0")
+            .endpoint("http://localhost:4317")
+            .sample_rate(0.5)
+            .exporter(ExporterConfig::Stdout);
+
+        assert_eq!(config.service_name, "svc");
+        assert_eq!(config.version, Some("1.0".to_string()));
+        assert_eq!(config.endpoint, Some("http://localhost:4317".to_string()));
+        assert_eq!(config.sample_rate, 0.5);
+        assert!(matches!(config.exporter, ExporterConfig::Stdout));
+    }
+
+    #[test]
+    fn clone_produces_equal_config() {
+        let config = OtelConfig::new("svc").version("1.0");
+        let cloned = config.clone();
+        assert_eq!(config.service_name, cloned.service_name);
+        assert_eq!(config.version, cloned.version);
+    }
+
+    #[test]
+    fn debug_format() {
+        let config = OtelConfig::new("svc");
+        let debug = format!("{:?}", config);
+        assert!(debug.contains("OtelConfig"));
+        assert!(debug.contains("svc"));
+    }
+}

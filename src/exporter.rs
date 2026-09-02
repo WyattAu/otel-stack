@@ -88,3 +88,99 @@ impl TracerExporter for PrometheusExporter {
         SdkTracerProvider::default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn debug_format_otlp() {
+        let config = ExporterConfig::Otlp;
+        let debug = format!("{:?}", config);
+        assert_eq!(debug, "Otlp");
+    }
+
+    #[test]
+    fn debug_format_stdout() {
+        let config = ExporterConfig::Stdout;
+        let debug = format!("{:?}", config);
+        assert_eq!(debug, "Stdout");
+    }
+
+    #[test]
+    fn debug_format_prometheus() {
+        let config = ExporterConfig::Prometheus;
+        let debug = format!("{:?}", config);
+        assert_eq!(debug, "Prometheus");
+    }
+
+    #[test]
+    fn clone_produces_equal_config() {
+        let configs = vec![
+            ExporterConfig::Otlp,
+            ExporterConfig::Stdout,
+            ExporterConfig::Prometheus,
+        ];
+        for config in configs {
+            let cloned = config.clone();
+            assert_eq!(format!("{:?}", config), format!("{:?}", cloned));
+        }
+    }
+
+    #[test]
+    fn build_otlp_with_feature() {
+        // With the default "otlp" feature, this should succeed
+        let result = ExporterConfig::Otlp.build();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn build_stdout_requires_feature() {
+        let result = ExporterConfig::Stdout.build();
+        #[cfg(not(feature = "stdout"))]
+        {
+            assert!(result.is_err());
+            match result {
+                Err(OtelError::FeatureRequired(name)) => assert_eq!(name, "stdout"),
+                _ => panic!("expected FeatureRequired error"),
+            }
+        }
+    }
+
+    #[test]
+    fn build_prometheus_requires_feature() {
+        let result = ExporterConfig::Prometheus.build();
+        #[cfg(not(feature = "prometheus"))]
+        {
+            assert!(result.is_err());
+            match result {
+                Err(OtelError::FeatureRequired(name)) => assert_eq!(name, "prometheus"),
+                _ => panic!("expected FeatureRequired error"),
+            }
+        }
+    }
+
+    #[test]
+    fn missing_feature_error_message() {
+        #[cfg(not(feature = "stdout"))]
+        {
+            let result = ExporterConfig::Stdout.build();
+            assert!(result.is_err());
+            let err = match result {
+                Err(e) => e,
+                Ok(_) => panic!("expected error"),
+            };
+            assert!(err.to_string().contains("stdout"));
+        }
+        #[cfg(not(feature = "prometheus"))]
+        {
+            let result = ExporterConfig::Prometheus.build();
+            assert!(result.is_err());
+            let err = match result {
+                Err(e) => e,
+                Ok(_) => panic!("expected error"),
+            };
+            assert!(err.to_string().contains("prometheus"));
+        }
+    }
+}
