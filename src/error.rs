@@ -9,19 +9,33 @@ pub enum OtelError {
     OtlpTransport(String),
     /// An exporter error from the SDK.
     Export(String),
+    /// An invalid configuration value.
+    InvalidConfig(String),
 }
 
 impl fmt::Display for OtelError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::FeatureRequired(name) => write!(f, "feature `{name}` is required but not enabled"),
+            Self::FeatureRequired(name) => {
+                write!(f, "feature `{name}` is required but not enabled")
+            }
             Self::OtlpTransport(msg) => write!(f, "OTLP transport error: {msg}"),
             Self::Export(msg) => write!(f, "exporter error: {msg}"),
+            Self::InvalidConfig(msg) => write!(f, "invalid config: {msg}"),
         }
     }
 }
 
 impl std::error::Error for OtelError {}
+
+impl From<otelkit::TelemetryError> for OtelError {
+    fn from(err: otelkit::TelemetryError) -> Self {
+        match err {
+            otelkit::TelemetryError::OtlpConnection(msg) => Self::OtlpTransport(msg),
+            otelkit::TelemetryError::InvalidConfig(msg) => Self::InvalidConfig(msg),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -49,16 +63,21 @@ mod tests {
     }
 
     #[test]
+    fn invalid_config_display() {
+        let err = OtelError::InvalidConfig("bad value".into());
+        assert_eq!(err.to_string(), "invalid config: bad value");
+    }
+
+    #[test]
     fn error_is_std_error() {
-        let err: Box<dyn std::error::Error> =
-            Box::new(OtelError::FeatureRequired("stdout"));
+        let err: Box<dyn std::error::Error> = Box::new(OtelError::FeatureRequired("stdout"));
         assert!(err.to_string().contains("stdout"));
     }
 
     #[test]
     fn debug_format() {
         let err = OtelError::FeatureRequired("otlp");
-        let debug = format!("{:?}", err);
+        let debug = format!("{err:?}");
         assert!(debug.contains("FeatureRequired"));
         assert!(debug.contains("otlp"));
     }
@@ -69,5 +88,17 @@ mod tests {
             let err = OtelError::FeatureRequired(name);
             assert!(err.to_string().contains(name));
         }
+    }
+
+    #[test]
+    fn from_telemetry_error_otlp() {
+        let err = OtelError::from(otelkit::TelemetryError::OtlpConnection("down".into()));
+        assert!(matches!(err, OtelError::OtlpTransport(_)));
+    }
+
+    #[test]
+    fn from_telemetry_error_config() {
+        let err = OtelError::from(otelkit::TelemetryError::InvalidConfig("bad".into()));
+        assert!(matches!(err, OtelError::InvalidConfig(_)));
     }
 }

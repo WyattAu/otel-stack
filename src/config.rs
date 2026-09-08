@@ -1,6 +1,10 @@
 use crate::ExporterConfig;
 
 /// Configuration for the OpenTelemetry stack.
+///
+/// This is a compatibility facade over [`otelkit::TelemetryConfig`]:
+/// all initialization logic lives in `otelkit`, this type only preserves
+/// the `otel-stack` configuration surface.
 #[derive(Debug, Clone)]
 pub struct OtelConfig {
     /// Name of the service for resource identification.
@@ -62,6 +66,23 @@ impl OtelConfig {
         self.exporter = exporter;
         self
     }
+
+    /// Convert to the underlying [`otelkit::TelemetryConfig`].
+    ///
+    /// Unset optionals fall back to otelkit defaults (version `"0.0.0"`,
+    /// INFO log level, JSON format, sample rate as configured).
+    pub fn into_telemetry_config(self) -> otelkit::TelemetryConfig {
+        let mut cfg = otelkit::TelemetryConfig::new(self.service_name)
+            .sample_rate(self.sample_rate as f32)
+            .exporter(self.exporter.into());
+        if let Some(version) = self.version {
+            cfg = cfg.service_version(version);
+        }
+        if let Some(endpoint) = self.endpoint {
+            cfg = cfg.otlp_endpoint(endpoint);
+        }
+        cfg
+    }
 }
 
 #[cfg(test)]
@@ -99,7 +120,7 @@ mod tests {
     #[test]
     fn builder_endpoint() {
         let config = OtelConfig::default().endpoint("http://localhost:4317");
-        assert_eq!(config.endpoint, Some("http://localhost:4317".to_string()));
+        assert_eq!(config.endpoint.as_deref(), Some("http://localhost:4317"));
     }
 
     #[test]
@@ -130,7 +151,7 @@ mod tests {
 
         assert_eq!(config.service_name, "svc");
         assert_eq!(config.version, Some("1.0".to_string()));
-        assert_eq!(config.endpoint, Some("http://localhost:4317".to_string()));
+        assert_eq!(config.endpoint.as_deref(), Some("http://localhost:4317"));
         assert_eq!(config.sample_rate, 0.5);
         assert!(matches!(config.exporter, ExporterConfig::Stdout));
     }
@@ -146,8 +167,31 @@ mod tests {
     #[test]
     fn debug_format() {
         let config = OtelConfig::new("svc");
-        let debug = format!("{:?}", config);
+        let debug = format!("{config:?}");
         assert!(debug.contains("OtelConfig"));
         assert!(debug.contains("svc"));
+    }
+
+    #[test]
+    fn into_telemetry_config_maps_all_fields() {
+        let cfg = OtelConfig::new("svc")
+            .version("1.0")
+            .endpoint("http://localhost:4317")
+            .sample_rate(0.5)
+            .exporter(ExporterConfig::Stdout)
+            .into_telemetry_config();
+        assert_eq!(cfg.service_name, "svc");
+        assert_eq!(cfg.service_version, "1.0");
+        assert_eq!(cfg.otlp_endpoint.as_deref(), Some("http://localhost:4317"));
+        assert_eq!(cfg.sample_rate, 0.5);
+        assert_eq!(cfg.exporter, otelkit::Exporter::Stdout);
+    }
+
+    #[test]
+    fn into_telemetry_config_defaults() {
+        let cfg = OtelConfig::default().into_telemetry_config();
+        assert_eq!(cfg.service_name, "unknown-service");
+        assert_eq!(cfg.service_version, "0.0.0");
+        assert!(cfg.otlp_endpoint.is_none());
     }
 }
