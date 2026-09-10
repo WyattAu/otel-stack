@@ -1,5 +1,9 @@
 # otel-stack
 
+[![docs.rs](https://docs.rs/otel-stack/badge.svg)](https://docs.rs/otel-stack)
+[![crates.io](https://img.shields.io/crates/v/otel-stack.svg)](https://crates.io/crates/otel-stack)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
+
 OpenTelemetry integration for Rust — unified tracing, metrics, and OTLP export with version-pinned dependencies.
 
 ## Purpose
