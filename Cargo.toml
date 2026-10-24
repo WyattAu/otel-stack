@@ -1,9 +1,9 @@
 [package]
 name = "otel-stack"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 rust-version = "1.85"
-description = "OpenTelemetry integration for Rust — compatibility facade over otelkit with exporter selection (OTLP, stdout, Prometheus)"
+description = "OpenTelemetry integration for Rust: unified tracing, metrics, and OTLP export with version-pinned dependencies"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/WyattAu/otel-stack"
 keywords = ["opentelemetry", "tracing", "metrics", "otlp", "observability"]

@@ -590,7 +590,7 @@ dependencies = [
 
 [[package]]
 name = "otel-stack"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "otelkit",
  "tokio",
@@ -598,7 +598,7 @@ dependencies = [
 
 [[package]]
 name = "otelkit"
-version = "2.0.3"
+version = "2.2.3"
 dependencies = [
  "opentelemetry",
  "opentelemetry-otlp",
