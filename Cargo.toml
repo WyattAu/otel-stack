@@ -1,6 +1,6 @@
 [package]
 name = "otel-stack"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.85"
 description = "OpenTelemetry integration for Rust: unified tracing, metrics, and OTLP export with version-pinned dependencies"
@@ -12,7 +12,7 @@ readme = "README.md"
 exclude = ["/target"]
 
 [dependencies]
-otelkit = { version = "2.0", path = "../otelkit", features = ["otlp", "stdout", "prometheus"] }
+otelkit = { version = "3.0", path = "../otelkit", features = ["otlp", "stdout", "prometheus"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

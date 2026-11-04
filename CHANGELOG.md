@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. Format: [Keep a
 Changelog](https://keepachangelog.com/) — versions follow [semver](https://semver.org).
 
+## [0.3.0] - 2026-11-04
+
+### Changed
+
+- Tracks `otelkit` 3.x (which moves Sentry 0.34 → 0.37 and refuses
+  unexportable export paths). The facade surface (`OtelConfig`,
+  `OtelStack`, `ExporterConfig`, `OtelError`) is unchanged; the
+  `TelemetryGuard` type-identity property with `otelkit` now holds
+  against otelkit 3.0.1, keeping the two crates in one semver zone.
+- Requires `otelkit` 3.0.
+
 ## [0.2.0] - 2026-09-08
 
 ### Changed
