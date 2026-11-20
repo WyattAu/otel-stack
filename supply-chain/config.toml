@@ -258,8 +258,16 @@ criteria = "safe-to-deploy"
 version = "0.2.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.otel-stack]]
+version = "0.3.0"
+criteria = "safe-to-deploy"
+
 [[exemptions.otelkit]]
 version = "2.0.3"
+criteria = "safe-to-deploy"
+
+[[exemptions.otelkit]]
+version = "3.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.parking_lot]]
